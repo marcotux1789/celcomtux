@@ -12,10 +12,10 @@ header('Access-Control-Allow-Headers: Content-Type');
 // CONFIGURACIÓN DE LA BASE DE DATOS
 // ============================================
 $config = [
-    'server' => 'midashboard.ddns.net',  // 👈 CAMBIA ESTO por tu dominio de No-IP
-    'database' => 'NombreDeTuBD',         // 👈 CAMBIA ESTO por el nombre de tu BD
-    'username' => 'dashboard_user',       // 👈 El usuario que creamos en SQL Server
-    'password' => 'TuClaveSegura123!'     // 👈 La contraseña de ese usuario
+    'server' => 'celcomtux.freedynamicdns.org/',  // 👈 CAMBIA ESTO por tu dominio de No-IP
+    'database' => 'MyBusiness20',         // 👈 CAMBIA ESTO por el nombre de tu BD
+    'username' => 'sa',       // 👈 El usuario que creamos en SQL Server
+    'password' => '12345678'     // 👈 La contraseña de ese usuario
 ];
 
 // ============================================
@@ -23,9 +23,9 @@ $config = [
 // ============================================
 function conectarSQL($config) {
     $connectionInfo = array(
-        "Database" => $config['database'],
-        "UID" => $config['username'],
-        "PWD" => $config['password'],
+        "Database" => $config['MyBusiness20'],
+        "UID" => $config['sa'],
+        "PWD" => $config['12345678'],
         "CharacterSet" => "UTF-8"
     );
     
