@@ -18,7 +18,7 @@ function conectarSQL($server, $database, $username, $password) {
     $connectionInfo = array(
         "Database" => $Mybusiness20,
         "UID" => $sa,
-        "PWD" => $12345678,
+        "PWD" => $"12345678",
         "CharacterSet" => "UTF-8"
     );
     
