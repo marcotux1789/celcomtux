@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <style>
+        body { font-family: Arial; margin: 50px; text-align: center; }
+        .ok { color: green; font-size: 24px; }
+        .card { background: #f0f0f0; padding: 20px; border-radius: 10px; margin: 20px auto; max-width: 500px; }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard POS</h1>
+    <div class="card">
+        <div class="ok">✅ API funcionando</div>
+        <p>Tu dashboard está activo en Render</p>
+        <p id="fecha"></p>
+    </div>
+    
+    <script>
+        document.getElementById('fecha').innerHTML = new Date().toLocaleString();
+        
+        // Probar API
+        fetch('/index.php?action=ping')
+            .then(res => res.json())
+            .then(data => console.log('API:', data))
+            .catch(err => console.error('Error:', err));
+    </script>
+</body>
+</html>
