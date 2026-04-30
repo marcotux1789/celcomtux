@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard POS - Mi Negocio</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+        
+        .status-bar {
+            background: #e8f4fd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #0066cc;
+        }
+        
+        .status-bar.error {
+            background: #fde8e8;
+            color: #cc0000;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .valor-grande {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        
+        .metricas-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metrica {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .metrica .label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .metrica .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+        
+        .paginacion {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .paginacion button {
+            padding: 5px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .paginacion button:hover:not(:disabled) {
+            background: #3498db;
+            color: white;
+        }
+        
+        .paginacion button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .search-box button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .valor-grande {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Dashboard de Ventas</h1>
+        
+        <div class="status-bar" id="statusBar">
+            🔄 Conectando con el servidor...
+        </div>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="cambiarTab('resumen')">📈 Resumen</button>
+            <button class="tab-btn" onclick="cambiarTab('productos')">🛍️ Productos</button>
+            <button class="tab-btn" onclick="cambiarTab('top')">🏆 Top Ventas</button>
+        </div>
+        
+        <!-- Tab Resumen -->
+        <div id="tab-resumen">
+            <div class="grid">
+                <div class="card">
+                    <h3>💰 Ventas Hoy</h3>
+                    <div class="valor-grande" id="totalHoy">$0</div>
+                    <div class="metricas-grid">
+                        <div class="metrica">
+                            <div class="label">📋 Número de ventas</div>
+                            <div class="value" id="numVentas">0</div>
+                        </div>
+                        <div class="metrica">
+                            <div class="label">🎫 Ticket promedio</div>
+                            <div class="value" id="promedio">$0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📅 Ventas del Mes</h3>
+                    <div class="valor-grande" id="totalMes">$0</div>
+                </div>
+                
+                <div class="card">
+                    <h3>👥 Clientes</h3>
+                    <div class="valor-grande" id="totalClientes">0</div>
+                    <div class="metrica" style="margin-top: 15px;">
+                        <div class="label">💰 Cartera vencida</div>
+                        <div class="value" id="clientesMorosos">$0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🏆 Top 5 Productos Más Vendidos</h3>
+                <canvas id="topChart" height="200"></canvas>
+            </div>
+        </div>
+        
+        <!-- Tab Productos -->
+        <div id="tab-productos" style="display: none;">
+            <div class="card">
+                <div class="search-box">
+                    <input type="text" id="buscarInput" placeholder="Buscar producto por nombre o código...">
+                    <button onclick="buscarProductos()">🔍 Buscar</button>
+                    <button onclick="limpiarBusqueda()">🗑️ Limpiar</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table id="tablaProductos">
+                        <thead>
+                            <tr><th>Código</th><th>Descripción</th><th>Precio</th><th>Existencia</th></tr>
+                        </thead>
+                        <tbody id="listaProductos">
+                            <tr><td colspan="4" class="loading">Cargando productos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="paginacion" id="paginacionContainer"></div>
+            </div>
+        </div>
+        
+        <!-- Tab Top Ventas -->
+        <div id="tab-top" style="display: none;">
+            <div class="card">
+                <h3>🏆 Top 10 Productos Más Vendidos (últimos 30 días)</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr><th>#</th><th>Producto</th><th>Unidades</th><th>Total Vendido</th></tr>
+                        </thead>
+                        <tbody id="listaTop">
+                            <tr><td colspan="4" class="loading">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.origin + '/index.php';
+        let chartTop = null;
+        let paginaActual = 1;
+        let totalPaginas = 1;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarDashboard();
+            cargarProductos();
+            setInterval(() => {
+                if (document.getElementById('tab-resumen').style.display !== 'none') {
+                    cargarDashboard();
+                }
+            }, 60000);
+        });
+        
+        function cambiarTab(tab) {
+            document.getElementById('tab-resumen').style.display = tab === 'resumen' ? 'block' : 'none';
+            document.getElementById('tab-productos').style.display = tab === 'productos' ? 'block' : 'none';
+            document.getElementById('tab-top').style.display = tab === 'top' ? 'block' : 'none';
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'productos') cargarProductos();
+            if (tab === 'top') cargarTopProductos();
+        }
+        
+        async function cargarDashboard() {
+            try {
+                const response = await fetch(`${API_URL}?action=resumen`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('statusBar').innerHTML = `⚠️ ${data.error}`;
+                    document.getElementById('statusBar').classList.add('error');
+                    return;
+                }
+                
+                document.getElementById('statusBar').innerHTML = '✅ Conexión exitosa - Datos en tiempo real';
+                document.getElementById('statusBar').classList.remove('error');
+                
+                document.getElementById('totalHoy').innerText = formatMoney(data.ventas_hoy || 0);
+                document.getElementById('totalMes').innerText = formatMoney(data.ventas_mes || 0);
+                document.getElementById('totalClientes').innerText = data.total_clientes || 0;
+                document.getElementById('numVentas').innerText = data.num_ventas_hoy || 0;
+                document.getElementById('promedio').innerText = formatMoney(data.promedio_hoy || 0);
+                document.getElementById('clientesMorosos').innerText = formatMoney(data.cartera_vencida || 0);
+                
+                cargarTopChart();
+                
+            } catch (error) {
+                document.getElementById('statusBar').innerHTML = `⚠️ Error de conexión: ${error.message}`;
+                document.getElementById('statusBar').classList.add('error');
+            }
+        }
+        
+        async function cargarTopChart() {
+            try {
+                const response = await fetch(`${API_URL}?action=top_productos&limit=5`);
+                const data = await response.json();
+                
+                if (data.error) return;
+                
+                const ctx = document.getElementById('topChart').getContext('2d');
+                
+                if (chartTop) chartTop.destroy();
+                
+                chartTop = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(p => p.DESCRIP?.substring(0, 20) || p.ARTICULO),
+                        datasets: [{
+                            label: 'Unidades vendidas',
+                            data: data.map(p => p.unidades_vendidas || 0),
+                            backgroundColor: '#3498db',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'top' }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error cargando gráfico:', error);
+            }
+        }
+        
+        async function cargarTopProductos() {
+            document.getElementById('listaTop').innerHTML = '<tr><td colspan="4" class="loading">Cargando...</td></tr>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=top_productos&limit=10`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('listaTop').innerHTML = `<tr><td colspan="4" class="loading">⚠️ ${data.error}</td></tr>`;
+                    return;
+                }
+                
+                if (data.length === 0) {
+                    document.getElementById('listaTop').innerHTML = '<tr><td colspan="4" class="loading">No hay datos disponibles</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach((p, index) => {
+                    html += `<tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${p.ARTICULO}</strong><br><small>${p.DESCRIP || ''}</small></td>
+                        <td>${p.unidades_vendidas || 0}</td>
+                        <td>${formatMoney(p.total_vendido || 0)}</td>
+                    </tr>`;
+                });
+                document.getElementById('listaTop').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('listaTop').innerHTML = `<tr><td colspan="4" class="loading">⚠️ Error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function cargarProductos() {
+            document.getElementById('listaProductos').innerHTML = '<tr><td colspan="4" class="loading">Cargando productos...</td></tr>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=productos&pagina=${paginaActual}&por_pagina=50`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('listaProductos').innerHTML = `<tr><td colspan="4" class="loading">⚠️ ${data.error}</td></tr>`;
+                    return;
+                }
+                
+                if (data.productos && data.productos.length > 0) {
+                    let html = '';
+                    data.productos.forEach(p => {
+                        html += `<tr>
+                            <td><strong>${p.ARTICULO}</strong></td>
+                            <td>${p.DESCRIP || ''}</td>
+                            <td>${formatMoney(p.PRECIO1 || 0)}</td>
+                            <td>${p.EXISTENCIA || 0}</td>
+                        </tr>`;
+                    });
+                    document.getElementById('listaProductos').innerHTML = html;
+                    
+                    totalPaginas = data.total_paginas || 1;
+                    actualizarPaginacion();
+                } else {
+                    document.getElementById('listaProductos').innerHTML = '<tr><td colspan="4" class="loading">No hay productos</td></tr>';
+                }
+                
+            } catch (error) {
+                document.getElementById('listaProductos').innerHTML = `<tr><td colspan="4" class="loading">⚠️ Error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function buscarProductos() {
+            const busqueda = document.getElementById('buscarInput').value.trim();
+            if (busqueda.length < 2) {
+                alert('Escribe al menos 2 caracteres para buscar');
+                return;
+            }
+            
+            document.getElementById('listaProductos').innerHTML = '<tr><td colspan="4" class="loading">Buscando...</td></tr>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=buscar_productos&q=${encodeURIComponent(busqueda)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('listaProductos').innerHTML = `<tr><td colspan="4" class="loading">⚠️ ${data.error}</td></tr>`;
+                    return;
+                }
+                
+                if (data.length === 0) {
+                    document.getElementById('listaProductos').innerHTML = '<tr><td colspan="4" class="loading">No se encontraron productos</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(p => {
+                    html += `<tr>
+                        <td><strong>${p.ARTICULO}</strong></td>
+                        <td>${p.DESCRIP || ''}</td>
+                        <td>${formatMoney(p.PRECIO1 || 0)}</td>
+                        <td>${p.EXISTENCIA || 0}</td>
+                    </tr>`;
+                });
+                document.getElementById('listaProductos').innerHTML = html;
+                document.getElementById('paginacionContainer').innerHTML = '';
+                
+            } catch (error) {
+                document.getElementById('listaProductos').innerHTML = `<tr><td colspan="4" class="loading">⚠️ Error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        function limpiarBusqueda() {
+            document.getElementById('buscarInput').value = '';
+            paginaActual = 1;
+            cargarProductos();
+        }
+        
+        function actualizarPaginacion() {
+            const container = document.getElementById('paginacionContainer');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>
+                <span>Página ${paginaActual} de ${totalPaginas}</span>
+                <button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>
+            `;
+        }
+        
+        function cambiarPagina(nueva) {
+            if (nueva < 1 || nueva > totalPaginas) return;
+            paginaActual = nueva;
+            cargarProductos();
+        }
+        
+        function formatMoney(value) {
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN',
+                minimumFractionDigits: 2
+            }).format(value);
+        }
+    </script>
+</body>
+</html>
