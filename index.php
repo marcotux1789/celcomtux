@@ -6,7 +6,7 @@ header('Access-Control-Allow-Origin: *');
 // ============================================
 // CONFIGURACIÓN - TUS DATOS CORRECTOS
 // ============================================
-$server = "celcomtux.freedynamicdns.org";
+$server = "celcomtux.freedynamicdns.org,53100";
 $database = "Mybusiness20";
 $username = "sa";
 $password = "12345678";
